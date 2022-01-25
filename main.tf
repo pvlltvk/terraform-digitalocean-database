@@ -10,28 +10,31 @@ resource "digitalocean_database_cluster" "cluster" {
   eviction_policy      = var.redis_eviction_policy
   sql_mode             = var.mysql_sql_mode
 
-  maintenance_window {
-    hour = var.cluster_maintenance_hour
-    day  = var.cluster_maintenance_day
+  dynamic "maintenance_window" {
+    for_each = var.cluster_maintenance != null ? [var.cluster_maintenance] : []
+
+    content {
+      hour = maintenance_window.value.maintenance_hour
+      day  = maintenance_window.value.maintenance_day
+    }
   }
 }
 
 resource "digitalocean_database_db" "database" {
-  for_each   = { for d in var.databases : d.name => d }
+  for_each   = toset(var.databases)
   cluster_id = digitalocean_database_cluster.cluster.id
-  name       = each.value.name
+  name       = each.value
 }
 
 resource "digitalocean_database_user" "user" {
-  for_each   = { for u in var.users : u.name => u }
-  cluster_id = digitalocean_database_cluster.cluster.id
-  name       = each.value.name
+  for_each          = { for u in var.users : u.name => u }
+  cluster_id        = digitalocean_database_cluster.cluster.id
+  name              = each.value.name
+  mysql_auth_plugin = lookup(each.value, "mysql_auth_plugin", null)
 }
 
 resource "digitalocean_database_connection_pool" "connection_pool" {
-  count = var.create_pools ? 1 : 0
-
-  for_each   = { for p in var.pools : p.name => p }
+  for_each   = var.create_pools ? { for p in var.pools : p.name => p } : {}
   cluster_id = digitalocean_database_cluster.cluster.id
   name       = each.value.name
   mode       = each.value.mode

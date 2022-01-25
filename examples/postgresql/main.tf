@@ -9,6 +9,14 @@ resource "digitalocean_vpc" "foo-bar-vpc" {
   region = "fra1"
 }
 
+resource "digitalocean_droplet" "web" {
+  image    = "ubuntu-18-04-x64"
+  name     = "web-1"
+  region   = "fra1"
+  size     = "s-1vcpu-1gb"
+  vpc_uuid = digitalocean_vpc.foo-bar-vpc.id
+}
+
 module "cluster" {
   source                       = "../../"
   cluster_name                 = "postgresql-fra1"
@@ -19,15 +27,12 @@ module "cluster" {
   cluster_node_count           = 2
   cluster_private_network_uuid = digitalocean_vpc.foo-bar-vpc.id
   cluster_tags                 = ["foo", "bar"]
+  cluster_maintenance = {
+    maintenance_hour = "02:00:00"
+    maintenance_day  = "saturday"
+  }
 
-  databases = [
-    {
-      name = "foo-database"
-    },
-    {
-      name = "bar-database"
-    }
-  ]
+  databases = ["foo-database", "bar-database"]
 
   users = [
     {
@@ -38,7 +43,7 @@ module "cluster" {
     }
   ]
 
-  create_pool = true
+  create_pools = true
   pools = [
     {
       name    = "foo-pool",
@@ -59,9 +64,8 @@ module "cluster" {
   create_firewall = true
   firewall_rules = [
     {
-      type  = "k8s",
-      value = module.kubernetes_cluster.kubernetes_cluster_id
+      type  = "droplet",
+      value = digitalocean_droplet.web.id
     }
   ]
-
 }
