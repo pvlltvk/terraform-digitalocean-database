@@ -27,7 +27,7 @@ resource "digitalocean_database_db" "database" {
 }
 
 resource "digitalocean_database_user" "user" {
-  for_each          = { for u in var.users : u.name => u }
+  for_each          = var.users != null ? { for u in var.users : u.name => u } : {}
   cluster_id        = digitalocean_database_cluster.cluster.id
   name              = each.value.name
   mysql_auth_plugin = lookup(each.value, "mysql_auth_plugin", null)

@@ -67,6 +67,7 @@ variable "databases" {
 variable "users" {
   description = "A list of users in the cluster"
   type        = list(map(string))
+  default     = null
 }
 
 variable "create_pools" {
@@ -78,6 +79,7 @@ variable "create_pools" {
 variable "pools" {
   description = "A list of connection pools in the cluster"
   type        = list(map(string))
+  default     = null
 }
 
 variable "create_firewall" {

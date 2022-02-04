@@ -1,9 +1,69 @@
 # terraform-digitalocean-database
 Terraform module which creates a DigitalOcean database cluster resource.
 
-## Usage Examples
-Some examples can be found in this repository:
+## Usage
+
+```hcl
+module "database" {
+  source                       = "../../"
+  cluster_name                 = "postgresql-fra1"
+  cluster_engine               = "pg"
+  cluster_version              = "13"
+  cluster_size                 = "db-s-2vcpu-4gb"
+  cluster_region               = "fra1"
+  cluster_node_count           = 2
+  cluster_private_network_uuid = digitalocean_vpc.foo-bar-vpc.id
+  cluster_tags                 = ["foo", "bar"]
+  cluster_maintenance = {
+    maintenance_hour = "02:00:00"
+    maintenance_day  = "saturday"
+  }
+
+  databases = ["foo-database", "bar-database"]
+
+  users = [
+    {
+      name = "foo-user"
+    },
+    {
+      name = "bar-user"
+    }
+  ]
+
+  create_pools = true
+  pools = [
+    {
+      name    = "foo-pool",
+      mode    = "transaction",
+      size    = 10,
+      db_name = "foo-database",
+      user    = "foo-user"
+    },
+    {
+      name    = "bar-pool"
+      mode    = "transaction",
+      size    = 10,
+      db_name = "bar-database",
+      user    = "bar-user"
+    }
+  ]
+
+  create_firewall = true
+  firewall_rules = [
+    {
+      type  = "droplet",
+      value = digitalocean_droplet.web.id
+    }
+  ]
+}
+```
+
+## Examples
+Some complete examples can be found in this repository:
 * [PostgreSQL](https://github.com/pvlltvk/terraform-digitalocean-database/tree/master/examples/postgresql)
+* [MySQL](https://github.com/pvlltvk/terraform-digitalocean-database/tree/master/examples/mysql)
+* [Redis](https://github.com/pvlltvk/terraform-digitalocean-database/tree/master/examples/redis)
+* [MongoDB](https://github.com/pvlltvk/terraform-digitalocean-database/tree/master/examples/mongodb)
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -51,9 +111,9 @@ No modules.
 | <a name="input_databases"></a> [databases](#input\_databases) | A list of databases in the cluster | `list(string)` | `[]` | no |
 | <a name="input_firewall_rules"></a> [firewall\_rules](#input\_firewall\_rules) | List of firewall rules associated with the cluster | `list(map(string))` | `[]` | no |
 | <a name="input_mysql_sql_mode"></a> [mysql\_sql\_mode](#input\_mysql\_sql\_mode) | A comma separated string specifying the SQL modes for a MySQL cluster. | `string` | `null` | no |
-| <a name="input_pools"></a> [pools](#input\_pools) | A list of connection pools in the cluster | `list(map(string))` | n/a | yes |
+| <a name="input_pools"></a> [pools](#input\_pools) | A list of connection pools in the cluster | `list(map(string))` | `null` | no |
 | <a name="input_redis_eviction_policy"></a> [redis\_eviction\_policy](#input\_redis\_eviction\_policy) | A string specifying the eviction policy for a Redis cluster. Valid values are: noeviction, allkeys\_lru, allkeys\_random, volatile\_lru, volatile\_random, or volatile\_ttl | `string` | `null` | no |
-| <a name="input_users"></a> [users](#input\_users) | A list of users in the cluster | `list(map(string))` | n/a | yes |
+| <a name="input_users"></a> [users](#input\_users) | A list of users in the cluster | `list(map(string))` | `null` | no |
 
 ## Outputs
 
